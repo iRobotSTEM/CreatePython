@@ -8,6 +8,20 @@ def wakeRobot(ser):
     ser.rts = False
     time.sleep(1) # Wait for robot to wake up, if asleep.
 
+def resetRobotAndWait(ser):
+    ser.reset_input_buffer()
+    # Send reset op code to robot
+    ser.write('\x07')
+
+    # Wait patiently for text to stop scrolling by so that we know the robot
+    #  is reset and not plugged into the charger.
+    sBuffer = "dummy string"
+    while len(sBuffer) is not 0:
+        sBuffer = ser.readline()
+        print sBuffer.strip()
+
+# Main body of code starts here!
+
 raw_input("Please unplug the charger, if you haven't already, and then press Enter to continue.")
 
 # Open a serial connection to Roomba.
@@ -16,16 +30,7 @@ ser = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, timeout = 3.0)
 wakeRobot(ser)
 
 print "Resetting robot:"
-ser.reset_input_buffer()
-# Send reset op code to robot
-ser.write('\x07')
-
-# Wait patiently for text to stop scrolling by so that we know the robot
-# is reset and not plugged into the charger.
-sBuffer = "dummy string"
-while len(sBuffer) is not 0:
-    sBuffer = ser.readline()
-    print sBuffer.strip()
+resetRobotAndWait(ser)
 
 print "Waking robot to set the LEDs and play a song."
 wakeRobot(ser)
