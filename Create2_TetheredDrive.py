@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # 27 May 2015
-# updated 1 April 2020 for Python3
 
 ###########################################################################
-# Copyright (c) 2015-2020 iRobot Corporation#
+# Copyright (c) 2015 iRobot Corporation
+# http://www.irobot.com/
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
@@ -35,9 +36,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###########################################################################
 
-from tkinter import *
-import tkinter.messagebox
-import tkinter.simpledialog
+from Tkinter import *
+import tkMessageBox
+import tkSimpleDialog
 
 import struct
 import sys, glob # for listing serial ports
@@ -45,7 +46,7 @@ import sys, glob # for listing serial ports
 try:
     import serial
 except ImportError:
-    tkinter.messagebox.showerror('Import error', 'Please install pyserial.')
+    tkMessageBox.showerror('Import error', 'Please install pyserial.')
     raise
 
 connection = None
@@ -55,6 +56,7 @@ TEXTHEIGHT = 16 # window height, in lines
 
 VELOCITYCHANGE = 200
 ROTATIONCHANGE = 300
+
 helpText = """\
 Supported Keys:
 P\tPassive
@@ -105,7 +107,10 @@ class TetheredDriveApp(Tk):
 
     # sendCommandASCII takes a string of whitespace-separated, ASCII-encoded base 10 values to send
     def sendCommandASCII(self, command):
-        cmd = bytes([int(v) for v in command.split()])
+        cmd = ""
+        for v in command.split():
+            cmd += chr(int(v))
+
         self.sendCommandRaw(cmd)
 
     # sendCommandRaw takes a string interpreted as a byte array
@@ -114,19 +119,17 @@ class TetheredDriveApp(Tk):
 
         try:
             if connection is not None:
-                assert isinstance(command, bytes), 'Command must be of type bytes'
                 connection.write(command)
-                connection.flush()
             else:
-                tkinter.messagebox.showerror('Not connected!', 'Not connected to a robot!')
-                print("Not connected.")
+                tkMessageBox.showerror('Not connected!', 'Not connected to a robot!')
+                print "Not connected."
         except serial.SerialException:
-            print("Lost connection")
-            tkinter.messagebox.showinfo('Uh-oh', "Lost connection to the robot!")
+            print "Lost connection"
+            tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
             connection = None
 
-        seq = ' '.join([ str(c) for c in command ])
-        self.text.insert(END, ' '.join([ str(c) for c in command ]))
+        print ' '.join([ str(ord(c)) for c in command ])
+        self.text.insert(END, ' '.join([ str(ord(c)) for c in command ]))
         self.text.insert(END, '\n')
         self.text.see(END)
 
@@ -138,12 +141,12 @@ class TetheredDriveApp(Tk):
         try:
             return struct.unpack(fmt, connection.read(n))[0]
         except serial.SerialException:
-            print("Lost connection")
-            tkinter.messagebox.showinfo('Uh-oh', "Lost connection to the robot!")
+            print "Lost connection"
+            tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
             connection = None
             return None
         except struct.error:
-            print("Got unexpected data from serial port.")
+            print "Got unexpected data from serial port."
             return None
 
     # get8Unsigned returns an 8-bit unsigned value.
@@ -195,7 +198,7 @@ class TetheredDriveApp(Tk):
                 self.callbackKeyRight = True
                 motionChange = True
             else:
-                print("not handled", repr(k))
+                print repr(k), "not handled"
         elif event.type == '3': # KeyRelease; need to figure out how to get constant
             if k == 'UP':
                 self.callbackKeyUp = False
@@ -219,8 +222,8 @@ class TetheredDriveApp(Tk):
             rotation -= ROTATIONCHANGE if self.callbackKeyRight is True else 0
 
             # compute left and right wheel velocities
-            vr = int(velocity + (rotation/2))
-            vl = int(velocity - (rotation/2))
+            vr = velocity + (rotation/2)
+            vl = velocity - (rotation/2)
 
             # create drive command
             cmd = struct.pack(">Bhh", 145, vr, vl)
@@ -232,31 +235,31 @@ class TetheredDriveApp(Tk):
         global connection
 
         if connection is not None:
-            tkinter.messagebox.showinfo('Oops', "You're already connected!")
+            tkMessageBox.showinfo('Oops', "You're already connected!")
             return
 
         try:
             ports = self.getSerialPorts()
-            port = tkinter.simpledialog.askstring('Port?', 'Enter COM port to open.\nAvailable options:\n' + '\n'.join(ports))
+            port = tkSimpleDialog.askstring('Port?', 'Enter COM port to open.\nAvailable options:\n' + '\n'.join(ports))
         except EnvironmentError:
-            port = tkinter.simpledialog.askstring('Port?', 'Enter COM port to open.')
+            port = tkSimpleDialog.askstring('Port?', 'Enter COM port to open.')
 
         if port is not None:
-            print("Trying " + str(port) + "... ")
+            print "Trying " + str(port) + "... "
             try:
                 connection = serial.Serial(port, baudrate=115200, timeout=1)
-                print("Connected!")
-                tkinter.messagebox.showinfo('Connected', "Connection succeeded!")
+                print "Connected!"
+                tkMessageBox.showinfo('Connected', "Connection succeeded!")
             except:
-                print("Failed.")
-                tkinter.messagebox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
+                print "Failed."
+                tkMessageBox.showinfo('Failed', "Sorry, couldn't connect to " + str(port))
 
 
     def onHelp(self):
-        tkinter.messagebox.showinfo('Help', helpText)
+        tkMessageBox.showinfo('Help', helpText)
 
     def onQuit(self):
-        if tkinter.messagebox.askyesno('Really?', 'Are you sure you want to quit?'):
+        if tkMessageBox.askyesno('Really?', 'Are you sure you want to quit?'):
             self.destroy()
 
     def getSerialPorts(self):
