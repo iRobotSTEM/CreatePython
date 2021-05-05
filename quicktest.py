@@ -52,7 +52,7 @@ def resetRobotAndWait(ser):
     # Wait patiently for text to stop scrolling by so that we know the robot
     #  is reset and not plugged into the charger.
     sBuffer = "dummy string"
-    while len(sBuffer) is not 0:
+    while len(sBuffer) != 0:
         sBuffer = ser.readline()
         print(sBuffer.strip())
 
